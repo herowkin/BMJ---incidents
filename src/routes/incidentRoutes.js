@@ -10,7 +10,6 @@ import { protect } from '../middleware/auth.js';
 
 const router = Router();
 
-// All incident routes require auth
 router.use(protect);
 
 router.get('/', listIncidents);

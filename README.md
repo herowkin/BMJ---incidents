@@ -3,8 +3,8 @@
 Quick start:
 ```bash
 npm install
-cp .env.example .env  # edit values
-npm run dev           # or: npm start
+cp .env.example .env  
+npm run dev          
 ```
 
 Seed an admin user (email: admin@bmj.local / password: Admin@123):
