@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import 'express-async-errors';
 import { connectDB } from './config/db.js';
 import authRoutes from './routes/authRoutes.js';
@@ -14,6 +16,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
+
+//Serve front end client
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const clientPath = path.join(__dirname, '..', 'client');
+app.use(express.static(clientPath));
+app.get('/', (_req, res) => res.sendFile(path.join(clientPath, 'index.html')));
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', service: 'bmj-incidents' }));
 
