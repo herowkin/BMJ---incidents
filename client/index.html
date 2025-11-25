@@ -7,12 +7,21 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
+    
+    <header class="top-bar">
+        <div class="logo-wrapper">
+          <img src="./imgs/BADLOGO.png" alt="BMJ Logo" class="logo-img" />
+           
+        </div>
+        <h1 class="app-title">BMJ Incidents</h1>
+    </header>
     <div id="app">
-        <h1>BMJ Incidents</h1>
+        <h2>BMJ Incidents</h2>
 
         <section id="auth">
             <div id="login-area">
-                <h2>Login</h2>
+                <h3>Login</h3>
                 <label>Email: <input id="email" type="email" /></label>
                 <label>Password: <input id="password" type="password" /></label>
                 <button id="btn-login">Login</button>
@@ -28,7 +37,7 @@
         </section>
 
         <section id="create-ticket" class="hidden">
-            <h2>Create Ticket</h2>
+            <h3>Create Ticket</h3>
             <label>Title: <input id="title" type="text" /></label>
             <label>Description: <textarea id="description"></textarea></label>
             <label>Category: <input id="category" type="text" value="General" /></label>
@@ -44,13 +53,13 @@
         </section>
 
         <section id="tickets" class="hidden">
-            <h2>Tickets</h2>
+            <h3>Tickets</h3>
             <button id="btn-refresh">Refresh</button>
             <div id="tickets-list"></div>
         </section>
 
         <div id="message" class="message"></div>
-  </div>
+    </div>
 
 <script src="app.js"></script>
 </body>
