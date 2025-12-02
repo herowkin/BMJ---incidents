@@ -85,11 +85,11 @@ async function login() {
         if (!res.ok) 
             return showMessage(data.message || 'Login failed', 'error');
 
-            setToken(data.token);
-            setUser(data.user);
-            showMessage('Logged in', 'success');
-            updateUIForAuth();
-        } 
+        setToken(data.token);
+        setUser(data.user);
+        showMessage('Logged in', 'success');
+        updateUIForAuth();
+    } 
     catch (err) {
         console.error(err);
         showMessage('Network error', 'error');
@@ -125,7 +125,7 @@ async function register() {
     catch (err) {
         console.error(err);
         showMessage('Network error', 'error');
-  }
+    }
 }
 
 //Create a ticket when button is pressed
@@ -172,11 +172,15 @@ function renderTicket(item) {
     const priority = item.priority || 'Medium';
     const status = item.status || 'Open';
 
-    //Admin controls: Assign to me (only if unassigned) and Edit (only if assigned to this admin)
     const currentUser = getUser();
+    const userId = currentUser && (currentUser.id || currentUser._id);
     const isAdmin = currentUser && currentUser.role === 'admin';
+
     const assignedName = item.assignedTo?.name || item.assignedTo?.email || (item.assignedTo ? String(item.assignedTo) : null);
     const assignedId = item.assignedTo && (item.assignedTo._id || item.assignedTo);
+
+    const createdId = item.createdBy && (item.createdBy._id || item.createdBy);
+    const canDelete = userId && (isAdmin || String(createdId) === String(userId));
 
     //use innerHTML to build ticket
     d.innerHTML = `<h3>${item.title} <span class="status">${status}</span></h3>
@@ -185,10 +189,11 @@ function renderTicket(item) {
     <div class="meta">Assigned to: ${assignedName ? assignedName : '<em>Unassigned</em>'}</div>
     <p class="desc">${item.description}</p>`;
 
-    if (isAdmin) {
-        const controls = document.createElement('div');
-        controls.className = 'admin-controls';
+    // controls container (admin actions + delete)
+    const controls = document.createElement('div');
+    controls.className = 'admin-controls';
 
+    if (isAdmin) {
         //Assign button only if unassigned
         if (!item.assignedTo) {
             const assignBtn = document.createElement('button');
@@ -198,18 +203,30 @@ function renderTicket(item) {
             controls.appendChild(assignBtn);
         }
 
-        //Edit button
-        //Only show Edit if the ticket is assigned to this admin
-        if (assignedId && String(assignedId) === String(currentUser.id || currentUser._id)) {
+        //Edit button (only if ticket assigned to this admin)
+        if (assignedId && String(assignedId) === String(userId)) {
             const editBtn = document.createElement('button');
             editBtn.textContent = 'Edit';
             editBtn.className = 'btn-edit';
             editBtn.addEventListener('click', () => openEditForm(item, d));
             controls.appendChild(editBtn);
         }
+    }
 
+    // Delete button – admin OR creator
+    if (canDelete) {
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.className = 'btn-delete';
+        deleteBtn.addEventListener('click', () => deleteTicket(item._id, d));
+        controls.appendChild(deleteBtn);
+    }
+
+    // only append controls if there’s at least one button
+    if (controls.children.length > 0) {
         d.appendChild(controls);
     }
+
     return d;
 }
 
@@ -232,6 +249,43 @@ async function assignToMe(id, node) {
         fetchTickets();
     } 
     catch (err) {
+        console.error(err);
+        showMessage('Network error', 'error');
+    }
+}
+
+//Delete ticket (admin or creator)
+async function deleteTicket(id, node) {
+    const ok = confirm('Are you sure you want to delete this ticket?');
+    if (!ok) return;
+
+    try {
+        const res = await fetch(`${apiBase}/incidents/${id}`, {
+            method: 'DELETE',
+            headers: authHeaders(),
+        });
+
+        let data = null;
+        try {
+            data = await res.json();
+        } catch {
+            // might be empty body (204), that’s fine
+        }
+
+        if (!res.ok) {
+            return showMessage(
+                (data && data.message) || 'Delete failed',
+                'error'
+            );
+        }
+
+        showMessage('Ticket deleted', 'success');
+
+        // remove from UI
+        if (node && node.parentNode) {
+            node.parentNode.removeChild(node);
+        }
+    } catch (err) {
         console.error(err);
         showMessage('Network error', 'error');
     }
@@ -298,21 +352,20 @@ function openEditForm(item, node) {
         const description = form.querySelector('textarea[name="description"]').value.trim();
         try {
             const res = await fetch(`${apiBase}/incidents/${item._id}`, {
-            method: 'PATCH',
-            headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
-            body: JSON.stringify({ title, status, category, priority, description }),
-        });
+                method: 'PATCH',
+                headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+                body: JSON.stringify({ title, status, category, priority, description }),
+            });
 
-        const data = await res.json();
-      
-        if (!res.ok) 
-            return showMessage(data.message || 'Update failed', 'error');
+            const data = await res.json();
         
-        showMessage('Ticket updated', 'success');
-        //refresh tickets to reflect changes
-        fetchTickets();
+            if (!res.ok) 
+                return showMessage(data.message || 'Update failed', 'error');
+            
+            showMessage('Ticket updated', 'success');
+            //refresh tickets to reflect changes
+            fetchTickets();
         }
-
         catch (err) {
             console.error(err);
             showMessage('Network error', 'error');

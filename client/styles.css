@@ -134,3 +134,9 @@ button {
     background: #4caf50; 
     color: #fff; 
 }
+
+.btn-delete {
+    margin-left: 0.5rem;
+    background: #b3261e;
+    color: #fff;
+}
